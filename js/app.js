@@ -5,8 +5,18 @@ import { tripsFor, columns, cells, directions, departuresAt, scheduledPositions,
 import { IslandMap } from './map.js';
 import { renderFerries, fetchLive, liveSaved } from './ferry.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const DAYS_SHOWN = 14;
+const params = new URLSearchParams(location.search);
+
+// The looks. Each is only colours and type in style.css ([data-look=...]).
+const LOOKS = [
+  { id: 'plain', name: 'Plain', bar: '#101113', light: false },
+  { id: 'signal', name: 'Signal', bar: '#ffffff', light: true },
+  { id: 'chart', name: 'Chart', bar: '#f3ecdc', light: true },
+  { id: 'board', name: 'Departures', bar: '#000000', light: false },
+  { id: 'forest', name: 'Forest', bar: '#0f1d17', light: false },
+];
 
 const S = {
   tab: store('ssi-tab') || 'bus',
@@ -17,7 +27,19 @@ const S = {
   earlier: false,
   bus: null, ferries: null, mapData: null, map: null,
   live: liveSaved(), liveState: null,
+  look: params.get('look') || store('ssi-look') || 'plain',
 };
+
+function applyLook(id) {
+  const look = LOOKS.find(l => l.id === id) || LOOKS[0];
+  S.look = look.id;
+  store('ssi-look', look.id);
+  document.documentElement.dataset.look = look.id;
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', look.bar);
+}
+
+const lookPicker = () => `<div class="looks"><span>Look</span>${LOOKS.map(l =>
+  `<button class="${l.id === S.look ? 'on' : ''}" data-act="look" data-look="${l.id}">${l.name}</button>`).join('')}</div>`;
 
 const $ = s => document.querySelector(s);
 const today = () => midnight(new Date());
@@ -43,6 +65,9 @@ async function start() {
     return;
   }
   S.date = today();
+  applyLook(S.look);
+  if (params.get('tab')) S.tab = params.get('tab');
+  if (params.get('route')) S.route = params.get('route');
   S.map = new IslandMap($('#map'), S.mapData, S.bus, {
     onStop: id => openStop(id),
     onTerminal: () => setTab('ferry'),
@@ -51,6 +76,7 @@ async function start() {
   wire();
   setTab(S.tab, true);
   render();
+  if (params.get('shot') === 'route') $('#bus-body').scrollIntoView({ block: 'start' });
   setInterval(tick, 15000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 }
@@ -69,6 +95,7 @@ function wire() {
     if (act === 'close-sheet') closeSheet();
     if (act === 'ferry-refresh') refreshLive(true);
     if (act === 'pick-date') pickDate();
+    if (act === 'look') { applyLook(a.dataset.look); render(); }
   });
   for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => setTab(b.dataset.tab);
   $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
@@ -123,7 +150,10 @@ function render() {
   renderBanner(day);
   const trips = tripsFor(S.bus, day);
   if (S.tab === 'bus') renderBus(day, trips);
-  else renderFerries($('#ferry-view'), { ferries: S.ferries, live: S.live, date: S.date, today: today(), now: isToday() ? nowMin() : -1, trips, liveState: S.liveState });
+  else {
+    renderFerries($('#ferry-view'), { ferries: S.ferries, live: S.live, date: S.date, today: today(), now: isToday() ? nowMin() : -1, trips, liveState: S.liveState });
+    $('#ferry-view').insertAdjacentHTML('beforeend', lookPicker());
+  }
 }
 
 function renderDays() {
@@ -177,7 +207,7 @@ function renderBus(day, trips) {
   else html += S.bus.routes.map(r => routeCard(r, trips, now)).join('');
 
   html += `<p class="foot">Timetable from BC Transit's open data, valid to ${feedEnd()}. Checked for updates ${ago(Date.parse(S.ferries.generated))}. Not affiliated with BC Transit · v${VERSION}</p>`;
-  $('#bus-body').innerHTML = html;
+  $('#bus-body').innerHTML = html + lookPicker();
 }
 
 function feedEnd() {

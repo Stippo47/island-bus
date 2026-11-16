@@ -1,7 +1,7 @@
 // Keeps the whole app and its timetables on the phone, so it opens with no signal.
 // App files: one cache per release (change VERSION when any of them change).
 // Timetables (data/): served from the saved copy at once, refreshed in the background.
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const CACHE = `ssi-${VERSION}`;
 const DATA = 'ssi-data';
 const FILES = [

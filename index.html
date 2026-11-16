@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-look="plain">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -12,6 +12,12 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Island Bus</title>
+<script>
+// The chosen look, before the first paint (js/app.js keeps it up to date).
+try { var l = new URLSearchParams(location.search).get('look') || JSON.parse(localStorage.getItem('ssi-look')); if (l) document.documentElement.dataset.look = l;
+  // light looks need dark status-bar text
+  if (l === 'signal' || l === 'chart') document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').setAttribute('content', 'default'); } catch (e) {}
+</script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>

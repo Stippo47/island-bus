@@ -1,0 +1,46 @@
+# BC Ferries seasonal schedules for Salt Spring Island, copied from bcferries.com.
+# The nightly workflow turns this into data/ferries.json; the weekly check (see README) refreshes it.
+#
+# One block per route:  CODE | valid dates exactly as BC Ferries prints them | page
+# Then one line per group of days with the same sailings:
+#   mon,tue: depart>arrive depart>arrive[notes] ...
+# Notes in [ ], split by |:  DG = dangerous goods only, no passengers;
+#   "Stop X" / "Transfer X" = calls at X on the way.
+# Pages: https://www.bcferries.com/routes-fares/schedules/seasonal/<FROM>-<TO>
+
+SWBFUL | Nov 16, 2026 - Dec 09, 2026 | SWB-FUL
+mon,tue,thu,fri,sat: 7:00a>7:35a 9:00a>9:35a 11:00a>11:35a 1:00p>1:35p 3:00p>3:35p 5:00p>5:35p 7:00p>7:35p 9:00p>9:35p
+wed: 7:00a>7:35a 9:00a>9:35a 11:00a>11:35a 1:00p>1:35p 3:00p>3:35p 5:00p>5:35p 7:00p>7:35p 9:15p>9:50p
+sun: 9:00a>9:35a 11:00a>11:35a 1:00p>1:35p 3:00p>3:35p 5:00p>5:35p 7:00p>7:35p 9:00p>9:35p
+
+FULSWB | Nov 16, 2026 - Dec 09, 2026 | FUL-SWB
+mon,tue,wed,thu,fri,sat: 6:15a>6:50a 7:50a>8:25a 9:50a>10:25a 11:50a>12:25p 1:50p>2:25p 3:50p>4:25p 5:50p>6:25p 7:50p>8:25p
+sun: 6:15a>6:50a 9:50a>10:25a 11:50a>12:25p 1:50p>2:25p 3:50p>4:25p 5:50p>6:25p 7:50p>8:25p
+
+CFTVES | Nov 16, 2026 - Dec 10, 2026 | CFT-VES
+mon,thu: 6:30a>6:55a 7:40a>8:05a 8:55a>9:20a 10:10a>10:35a 11:25a>11:50a 12:55p>1:20p 2:20p>2:45p[DG] 3:35p>4:00p 4:50p>5:15p 6:05p>6:30p 7:55p>8:20p 9:00p>9:25p
+tue: 6:30a>6:55a 7:40a>8:05a 8:55a>9:20a 10:10a>10:35a 11:25a>11:50a 12:55p>1:20p 2:20p>2:45p 3:35p>4:00p 4:50p>5:15p 6:05p>6:30p 7:55p>8:20p 9:00p>9:25p
+wed: 6:30a>6:55a 7:40a>8:05a 8:55a>9:20a 10:10a>10:35a[DG] 11:25a>11:50a 12:55p>1:20p 2:20p>2:45p 3:35p>4:00p 4:50p>5:15p 6:05p>6:30p 7:55p>8:20p 9:00p>9:25p
+fri: 6:30a>6:55a 7:40a>8:05a 8:55a>9:20a 10:10a>10:35a 11:25a>11:50a 12:55p>1:20p 2:20p>2:45p 3:35p>4:00p 4:50p>5:15p 6:05p>6:30p 7:55p>8:20p 9:00p>9:25p 10:00p>10:25p 11:00p>11:25p
+sat: 6:30a>6:55a 7:40a>8:05a 8:55a>9:20a 10:10a>10:35a 11:25a>11:50a 12:55p>1:20p 2:20p>2:45p 3:35p>4:00p 4:50p>5:15p 6:05p>6:30p 7:55p>8:20p 9:00p>9:25p 10:00p>10:25p
+sun: 7:40a>8:05a 8:55a>9:20a 10:10a>10:35a 11:25a>11:50a 12:55p>1:20p 2:20p>2:45p 3:35p>4:00p 4:50p>5:15p 6:05p>6:30p 7:55p>8:20p 9:00p>9:25p
+
+VESCFT | Nov 16, 2026 - Dec 10, 2026 | VES-CFT
+mon,thu: 6:00a>6:25a 7:05a>7:30a 8:20a>8:45a 9:35a>10:00a 10:50a>11:15a 12:05p>12:30p 1:45p>2:10p 3:00p>3:25p 4:15p>4:40p 5:30p>5:55p 6:45p>7:10p[DG] 8:30p>8:55p
+tue: 6:00a>6:25a 7:05a>7:30a 8:20a>8:45a 9:35a>10:00a 10:50a>11:15a 12:05p>12:30p 1:45p>2:10p 3:00p>3:25p 4:15p>4:40p 5:30p>5:55p 6:45p>7:10p 8:30p>8:55p
+wed: 6:00a>6:25a 7:05a>7:30a 8:20a>8:45a 9:35a>10:00a 10:50a>11:15a 12:05p>12:30p 1:45p>2:10p 3:00p>3:25p 4:15p>4:40p[DG] 5:30p>5:55p 6:45p>7:10p 8:30p>8:55p
+fri: 6:00a>6:25a 7:05a>7:30a 8:20a>8:45a 9:35a>10:00a 10:50a>11:15a 12:05p>12:30p 1:45p>2:10p 3:00p>3:25p 4:15p>4:40p 5:30p>5:55p 6:45p>7:10p 8:30p>8:55p 9:30p>9:55p 10:30p>10:55p
+sat: 6:00a>6:25a 7:05a>7:30a 8:20a>8:45a 9:35a>10:00a 10:50a>11:15a 12:05p>12:30p 1:45p>2:10p 3:00p>3:25p 4:15p>4:40p 5:30p>5:55p 6:45p>7:10p 8:30p>8:55p 9:30p>9:55p
+sun: 6:00a>6:25a 8:20a>8:45a 9:35a>10:00a 10:50a>11:15a 12:05p>12:30p 1:45p>2:10p 3:00p>3:25p 4:15p>4:40p 5:30p>5:55p 6:45p>7:10p 8:30p>8:55p
+
+TSAPLH | Nov 16, 2026 - Nov 19, 2026 | TSA-PLH
+mon,tue,wed,thu: 9:55a>12:50p[Stop Galiano Island (Sturdies Bay)|Stop Mayne Island (Village Bay)|Stop Pender Island (Otter Bay)] 7:30p>10:30p[Stop Galiano Island (Sturdies Bay)|Stop Mayne Island (Village Bay)|Stop Pender Island (Otter Bay)]
+fri: 9:55a>12:50p[Stop Galiano Island (Sturdies Bay)|Stop Mayne Island (Village Bay)|Stop Pender Island (Otter Bay)] 3:20p>5:50p[Stop Galiano Island (Sturdies Bay)|Transfer Mayne Island (Village Bay)] 7:30p>9:45p[Stop Galiano Island (Sturdies Bay)|Stop Mayne Island (Village Bay)]
+sat: 12:40p>2:03p 10:00p>12:15a[Stop Galiano Island (Sturdies Bay)|Stop Mayne Island (Village Bay)]
+sun: 11:10a>2:10p[Stop Galiano Island (Sturdies Bay)|Stop Mayne Island (Village Bay)|Stop Pender Island (Otter Bay)] 9:05p>10:30p
+
+PLHTSA | Nov 16, 2026 - Nov 19, 2026 | PLH-TSA
+mon,tue,wed,thu: 6:20a>9:15a[Stop Pender Island (Otter Bay)|Stop Mayne Island (Village Bay)|Stop Galiano Island (Sturdies Bay)] 3:35p>6:50p[Stop Pender Island (Otter Bay)|Stop Mayne Island (Village Bay)|Stop Galiano Island (Sturdies Bay)]
+fri: 6:20a>9:15a[Stop Pender Island (Otter Bay)|Stop Mayne Island (Village Bay)|Stop Galiano Island (Sturdies Bay)] 1:20p>2:43p
+sat: 6:50a>8:13a 3:30p>5:45p[Stop Mayne Island (Village Bay)|Stop Galiano Island (Sturdies Bay)]
+sun: 7:15a>10:10a[Stop Pender Island (Otter Bay)|Stop Mayne Island (Village Bay)|Stop Galiano Island (Sturdies Bay)] 2:55p>5:10p[Stop Pender Island (Otter Bay)]

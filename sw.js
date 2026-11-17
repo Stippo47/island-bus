@@ -1,12 +1,15 @@
 // Keeps the whole app and its timetables on the phone, so it opens with no signal.
 // App files: one cache per release (change VERSION when any of them change).
 // Timetables (data/): served from the saved copy at once, refreshed in the background.
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const CACHE = `ssi-${VERSION}`;
 const DATA = 'ssi-data';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
+  'vendor/fonts/inter.woff2', 'vendor/fonts/atkinson-hyperlegible-next.woff2', 'vendor/fonts/overpass.woff2',
+  'vendor/fonts/barlow-400.woff2', 'vendor/fonts/barlow-600.woff2', 'vendor/fonts/barlow-700.woff2',
+  'vendor/fonts/ibm-plex-sans.woff2', 'vendor/fonts/source-serif-4.woff2',
   'js/app.js', 'js/bus.js', 'js/days.js', 'js/ferry.js', 'js/map.js', 'js/util.js',
 ];
 const DATA_FILES = ['data/bus.json', 'data/ferries.json', 'data/map.json'];

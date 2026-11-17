@@ -5,7 +5,7 @@ import { tripsFor, columns, cells, directions, departuresAt, scheduledPositions,
 import { IslandMap } from './map.js';
 import { renderFerries, fetchLive, liveSaved } from './ferry.js';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const DAYS_SHOWN = 14;
 const params = new URLSearchParams(location.search);
 
@@ -18,6 +18,26 @@ const LOOKS = [
   { id: 'forest', name: 'Forest', bar: '#0f1d17', light: false },
 ];
 
+// Fonts bundled in vendor/fonts ('look' keeps the look's own).
+const FONTS = [
+  { id: 'look', name: 'Look\u2019s own' },
+  { id: 'atkinson', name: 'Atkinson' },
+  { id: 'overpass', name: 'Overpass' },
+  { id: 'inter', name: 'Inter' },
+  { id: 'barlow', name: 'Barlow' },
+  { id: 'plex', name: 'Plex' },
+  { id: 'sourceserif', name: 'Source Serif' },
+];
+
+// Where things go on the page.
+const LAYOUTS = [
+  { id: 'map', name: 'Map first' },
+  { id: 'next', name: 'Next bus first' },
+  { id: 'tabs', name: 'Map tab' },
+  { id: 'drawer', name: 'Drawer' },
+];
+const HUB = '117007';   // Ganges (Visitor Info Centre), where every route meets
+
 const S = {
   tab: store('ssi-tab') || 'bus',
   date: null,          // the day being looked at (local midnight)
@@ -27,8 +47,30 @@ const S = {
   earlier: false,
   bus: null, ferries: null, mapData: null, map: null,
   live: liveSaved(), liveState: null,
-  look: params.get('look') || store('ssi-look') || 'plain',
+  look: params.get('look') || store('ssi-look') || 'chart',
+  font: params.get('font') || store('ssi-font') || 'look',
+  layout: params.get('layout') || store('ssi-layout') || 'map',
 };
+
+function applyStyle() {
+  if (!FONTS.some(f => f.id === S.font)) S.font = 'look';
+  if (!LAYOUTS.some(l => l.id === S.layout)) S.layout = 'map';
+  store('ssi-font', S.font);
+  store('ssi-layout', S.layout);
+  const d = document.documentElement.dataset;
+  d.font = S.font;
+  d.layout = S.layout;
+  if (S.layout !== 'tabs' && S.tab === 'map') S.tab = 'bus';
+}
+
+// Heights the drawer and map-tab layouts size themselves by.
+function measure() {
+  const head = $('.top').offsetHeight;
+  const above = head + ($('#banner').offsetHeight || 0);
+  const r = document.documentElement.style;
+  r.setProperty('--head', head + 'px');
+  r.setProperty('--above', above + 'px');
+}
 
 function applyLook(id) {
   const look = LOOKS.find(l => l.id === id) || LOOKS[0];
@@ -39,13 +81,20 @@ function applyLook(id) {
 }
 
 const lookPicker = () => `<div class="looks"><span>Look</span>${LOOKS.map(l =>
-  `<button class="${l.id === S.look ? 'on' : ''}" data-act="look" data-look="${l.id}">${l.name}</button>`).join('')}</div>`;
+  `<button class="${l.id === S.look ? 'on' : ''}" data-act="look" data-look="${l.id}">${l.name}</button>`).join('')}</div>
+  <div class="looks fonts"><span>Font</span>${FONTS.map(f =>
+  `<button class="${f.id === S.font ? 'on' : ''}" data-act="font" data-font="${f.id}">${f.name}</button>`).join('')}</div>
+  <div class="looks layouts"><span>Layout</span>${LAYOUTS.map(l =>
+  `<button class="${l.id === S.layout ? 'on' : ''}" data-act="layout" data-layout-pick="${l.id}">${l.name}</button>`).join('')}</div>`;
 
 const $ = s => document.querySelector(s);
 const today = () => midnight(new Date());
 const isToday = () => sameDay(S.date, today());
 const routeById = id => S.bus.routes.find(r => r.id === id);
 const arrow = l => (/^Loop/.test(l) ? '⟳ ' : '→ ') + esc(l);
+// Where a trip goes, as the route cards say it ("⟳ Loop from Ganges" for loops).
+const labels = {};
+const tripLabel = t => arrow((labels[t.route] ||= directions(S.bus, t.route, [])).label[t.dir] || cleanHeadsign(t.headsign));
 const pill = r => `<span class="pill" style="--c:${r.color};--t:${r.text}">${esc(r.num)}</span>`;
 
 async function load(path) {
@@ -67,7 +116,9 @@ async function start() {
   S.date = today();
   applyLook(S.look);
   if (params.get('tab')) S.tab = params.get('tab');
+  applyStyle();
   if (params.get('route')) S.route = params.get('route');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(params.get('date') || '')) S.date = fromIso(params.get('date'));
   S.map = new IslandMap($('#map'), S.mapData, S.bus, {
     onStop: id => openStop(id),
     onTerminal: () => setTab('ferry'),
@@ -94,8 +145,11 @@ function wire() {
     if (act === 'pin') { S.pinned = S.pinned === a.dataset.stop ? null : a.dataset.stop; store('ssi-stop', S.pinned); S.map.setPinned(S.pinned); closeSheet(); render(); }
     if (act === 'close-sheet') closeSheet();
     if (act === 'ferry-refresh') refreshLive(true);
+    if (act === 'ferry-earlier') { S.ferryPast = !S.ferryPast; render(); }
     if (act === 'pick-date') pickDate();
     if (act === 'look') { applyLook(a.dataset.look); render(); }
+    if (act === 'font') { S.font = a.dataset.font; applyStyle(); render(); }
+    if (act === 'layout') { S.layout = a.dataset.layoutPick; applyStyle(); setTab(S.tab); }
   });
   for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => setTab(b.dataset.tab);
   $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
@@ -115,8 +169,9 @@ function pickDate() {
 function setTab(tab, first) {
   S.tab = tab;
   store('ssi-tab', tab);
+  document.documentElement.dataset.tab = tab;
   for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.tab === tab);
-  $('#bus-view').hidden = tab !== 'bus';
+  $('#bus-view').hidden = tab !== 'bus' && tab !== 'map';
   $('#ferry-view').hidden = tab !== 'ferry';
   if (tab === 'ferry') refreshLive(false);
   if (!first) { render(); window.scrollTo(0, 0); }
@@ -149,11 +204,12 @@ function render() {
   const day = busDay(S.bus, S.date);
   renderBanner(day);
   const trips = tripsFor(S.bus, day);
-  if (S.tab === 'bus') renderBus(day, trips);
+  if (S.tab === 'bus' || S.tab === 'map') renderBus(day, trips);
   else {
-    renderFerries($('#ferry-view'), { ferries: S.ferries, live: S.live, date: S.date, today: today(), now: isToday() ? nowMin() : -1, trips, liveState: S.liveState });
+    renderFerries($('#ferry-view'), { ferries: S.ferries, live: S.live, date: S.date, today: today(), now: isToday() ? nowMin() : -1, trips, liveState: S.liveState, showPast: S.ferryPast });
     $('#ferry-view').insertAdjacentHTML('beforeend', lookPicker());
   }
+  measure();
 }
 
 function renderDays() {
@@ -200,7 +256,9 @@ function renderBus(day, trips) {
   let html = `<div class="chips">${S.bus.routes.map(r =>
     `<button class="chip ${S.route === r.id ? 'on' : ''}" data-act="route" data-route="${r.id}" style="--c:${r.color};--t:${r.text}">${pill(r)}<span>${esc(r.name)}</span></button>`).join('')}</div>`;
 
-  if (S.pinned && S.bus.stops[S.pinned]) html += stopPanel(S.pinned, trips, now, true);
+  const nextFirst = S.layout === 'next' || S.layout === 'tabs';
+  $('#next').innerHTML = nextFirst ? nextPanel(trips, now) : '';
+  if (!nextFirst && S.pinned && S.bus.stops[S.pinned]) html += stopPanel(S.pinned, trips, now, true);
 
   if (day.kind === 'none') html += `<p class="empty">No buses run on ${dayLabel(S.date)}.</p>`;
   else if (S.route) html += timetable(S.route, trips, now);
@@ -243,7 +301,10 @@ function timetable(routeId, trips, now) {
   const { dirs, label } = directions(S.bus, routeId, mine);
   const avail = dirs.filter(d => mine.some(t => t.dir === d));
   let dir = S.dir[routeId];
-  if (!avail.includes(dir)) dir = (now >= 0 && avail.find(d => mine.some(t => t.dir === d && lastArr(t) >= now))) ?? avail[0];
+  if (!avail.includes(dir)) {
+    const upcoming = now >= 0 ? avail.find(d => mine.some(t => t.dir === d && lastArr(t) >= now)) : undefined;
+    dir = upcoming ?? avail[0];
+  }
   const head = `<div class="tt-head" style="--c:${r.color}">${pill(r)}<h2>${esc(r.name)}</h2>
     <button class="x" data-act="route" data-route="" aria-label="All routes">All routes</button></div>`;
   if (!mine.length) return head + '<p class="empty">No trips on this route this day.</p>';
@@ -276,13 +337,29 @@ function timetable(routeId, trips, now) {
     <p class="hint">Tap a stop name for every bus from it. Green bar = on the road now · coloured row = next bus.</p>`;
 }
 
+// "Next bus first": the soonest buses from your stop, or from Ganges until you pick one.
+function nextPanel(trips, now) {
+  const id = S.pinned && S.bus.stops[S.pinned] ? S.pinned : HUB;
+  const list = departuresAt(trips, id, now >= 0 ? now - 0.5 : -1).slice(0, 5);
+  const stop = shortStop(S.bus.stops[id].name);
+  const rows = list.map((x, i) => {
+    const r = routeById(x.trip.route);
+    return `<li class="${i === 0 && now >= 0 ? 'first' : ''}">${pill(r)}<span class="to">${tripLabel(x.trip)}</span><span class="t">${fmt(x.time)}</span>${now >= 0 ? `<span class="in">${until(x.time, now)}</span>` : ''}</li>`;
+  }).join('');
+  return `<section class="next-panel">
+    <div class="np-head"><h2>${now >= 0 ? 'Next buses' : 'First buses'} from ${esc(stop)}</h2><button data-act="stop" data-stop="${id}">All</button></div>
+    ${rows ? `<ul class="deps big">${rows}</ul>` : `<p class="muted">${now >= 0 ? 'No more buses from here today.' : 'No buses from here this day.'}</p>`}
+    ${id === HUB ? '<p class="hint">Tap a stop on the map and pin it to see your own stop here.</p>' : ''}
+  </section>`;
+}
+
 function stopPanel(stopId, trips, now, pinnedView) {
   const stop = S.bus.stops[stopId];
   const list = departuresAt(trips, stopId, now >= 0 ? now - 0.5 : -1);
   const max = pinnedView ? 4 : 40;
   const items = list.slice(0, max).map(x => {
     const r = routeById(x.trip.route);
-    return `<li>${pill(r)}<span class="to">→ ${esc(cleanHeadsign(x.trip.headsign))}</span><span class="t">${fmt(x.time)}</span>${now >= 0 ? `<span class="in">${until(x.time, now)}</span>` : ''}</li>`;
+    return `<li>${pill(r)}<span class="to">${tripLabel(x.trip)}</span><span class="t">${fmt(x.time)}</span>${now >= 0 ? `<span class="in">${until(x.time, now)}</span>` : ''}</li>`;
   }).join('');
   const empty = `<p class="muted">${now >= 0 ? 'No more buses from here today.' : 'No buses from here this day.'}</p>`;
   return `<div class="stop-panel ${pinnedView ? 'pinned' : ''}">

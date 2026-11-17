@@ -130,7 +130,8 @@ function column(title, res, now, isToday, extra) {
       <span class="sub">${s.arr != null ? `arr ${fmt(s.arr, true)}` : ''}${cls === 'next' ? ` · <b>${until(s.dep, now)}</b>` : ''}</span>
       ${statusBadge(s)}${extra && !s.dg ? extra(s) : ''}</li>`;
   }).join('');
-  return `<div class="fcol"><h4>${esc(title)}</h4><ul class="sailings">${rows}</ul></div>`;
+  const allGone = isToday && !nextDone;
+  return `<div class="fcol"><h4>${esc(title)}</h4><ul class="sailings">${rows}${allGone ? '<li class="none-left muted">No more sailings today</li>' : ''}</ul></div>`;
 }
 
 function notices(list) {
@@ -207,7 +208,7 @@ function lastBusBefore(list, t) {
   return b && t - b.time <= 45 ? `<span class="conn">Bus ${esc(b.trip.route.split('-')[0])} gets there ${fmt(b.time, true)}</span>` : '';
 }
 
-export function renderFerries(el, { ferries, live, date, today, now, trips, liveState }) {
+export function renderFerries(el, { ferries, live, date, today, now, trips, liveState, showPast }) {
   const isToday = sameDay(date, today);
   const hol = holidayName(date);
   let html = '';
@@ -216,6 +217,7 @@ export function renderFerries(el, { ferries, live, date, today, now, trips, live
       : liveState === 'error' ? 'Offline — showing saved sailings.'
       : live ? `Live data ${ago(live.at)}` : 'Saved sailings'}
       <button class="refresh" data-act="ferry-refresh">Refresh</button></div>`;
+    if (now >= 0) html += `<button class="earlier" data-act="ferry-earlier">${showPast ? 'Hide earlier sailings' : 'Show earlier sailings'}</button>`;
   }
   if (hol && !isToday) html += `<p class="src warn">${esc(hol)}: ferries often run a holiday schedule. Check bcferries.com.</p>`;
   for (const sec of SECTIONS) {
@@ -240,4 +242,5 @@ export function renderFerries(el, { ferries, live, date, today, now, trips, live
   }
   html += `<p class="foot">Ferry times from the open <a href="https://www.bcferriesapi.ca/" target="_blank" rel="noopener">BC Ferries API</a> (unofficial). Saved copy updated ${ago(Date.parse(ferries.generated))}.</p>`;
   el.innerHTML = html;
+  el.classList.toggle('show-past', !!showPast);
 }

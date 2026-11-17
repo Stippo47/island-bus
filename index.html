@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-look="plain">
+<html lang="en" data-look="chart" data-font="look" data-layout="map">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -7,14 +7,18 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Island Bus">
-<meta name="theme-color" content="#101113">
+<meta name="theme-color" content="#f3ecdc">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Island Bus</title>
 <script>
 // The chosen look, before the first paint (js/app.js keeps it up to date).
-try { var l = new URLSearchParams(location.search).get('look') || JSON.parse(localStorage.getItem('ssi-look')); if (l) document.documentElement.dataset.look = l;
+try { var q = new URLSearchParams(location.search), d = document.documentElement.dataset;
+  var pick = function (k) { return q.get(k) || JSON.parse(localStorage.getItem('ssi-' + k)); };
+  var l = pick('look') || 'chart'; d.look = l;
+  if (pick('font')) d.font = pick('font');
+  if (pick('layout')) d.layout = pick('layout');
   // light looks need dark status-bar text
   if (l === 'signal' || l === 'chart') document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').setAttribute('content', 'default'); } catch (e) {}
 </script>
@@ -32,12 +36,14 @@ try { var l = new URLSearchParams(location.search).get('look') || JSON.parse(loc
   <div id="banner"></div>
   <main>
     <section id="bus-view">
+      <div id="next"></div>
       <div id="map" class="map"></div>
       <div id="bus-body"></div>
     </section>
     <section id="ferry-view" hidden></section>
   </main>
   <nav class="tabs">
+    <button data-tab="map" class="map-tab">Map</button>
     <button data-tab="bus" class="on">Buses</button>
     <button data-tab="ferry">Ferries</button>
   </nav>
